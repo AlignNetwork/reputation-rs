@@ -5,19 +5,19 @@ use warp::Filter;
 
 
 use tokio;
-use ndarray::{Array2, Array1};
+use ndarray::{Array1};
 
 
 #[tokio::main]
 async fn main() {
   match eth::fetch_trust_matrix().await {
-    Ok(trust_matrix) => {
+    Ok(mut trust_matrix) => {
         println!("Trust Matrix: {:?}", trust_matrix);
         // Further processing...
     
     
 
-    let n = trust_matrix.shape()[0]
+    let n = trust_matrix.shape()[0];
     let mut global_trust_scores = Array1::from_vec(vec![1000.0, 2000.0, 500.0, 300.0, 200.0]);
 
     // Normalize local trust scores row-wise
@@ -46,15 +46,16 @@ async fn main() {
         println!("Node {}: Global Trust Score = {}", i, score);
 
     }
-    let scores = vec![ /* initialize your scores here */ ];
-    if let Err(e) = server::save_trust_scores(&scores).await {
-        eprintln!("Failed to save trust scores: {}", e);
-        return;
-    }
+    if let Err(e) = server::save_trust_scores(&global_trust_scores).await {
+      eprintln!("Failed to save trust scores: {}", e);
+      return;
+  }
 
     // Set up a route to serve the trust scores JSON
-    let trust_scores = warp::path("trust_scores")
-        .and(warp::fs::file("trust_scores.json"));
+   /*  let trust_scores = warp::path("trust_scores")
+        .and(warp::fs::file("trust_scores.json")); */
+
+        server::run_server().await;
   },
   Err(e) => eprintln!("Error: {}", e),
   }
